@@ -11,12 +11,18 @@
       "email": "student@test.com",
       "password": "test",
       "role": "student"
+    }
+  ],
+  "courses": [
+    {
+      "id": 1,
+      "title": "Cours1",
+      "date": "11/11/2021 11:11:11"
     },
     {
-      "id": 3,
-      "email": "student2@test.fr",
-      "password": "Test",
-      "role": "student"
+      "id": 2,
+      "title": "Cours2",
+      "date": "11/11/2021 11:11:11"
     }
   ]
 }
