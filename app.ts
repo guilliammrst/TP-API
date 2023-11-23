@@ -4,6 +4,7 @@ import FileSync from 'lowdb/adapters/FileSync';
 import bodyParser from 'body-parser';
 import * as yup from 'yup';
 import moment from 'moment'; 
+import basicAuth from 'express-basic-auth';
 
 // Base de données JSON
 const adapter = new FileSync('db.json');
@@ -60,35 +61,69 @@ const userSchema = yup.object({
     }),
   });
 
+  const studentCourseSchema = yup.object({
+    studentId: yup.number().required(),
+    courseId: yup.number().required(),
+    registeredAt: yup.string().matches(/^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}$/, 'Le format de la date doit être "MM/dd/yyyy HH:mm:ss"')
+    .transform((originalValue, originalObject) => {
+      const formattedDate = moment(originalValue).format('DD/MM/YYYY HH:mm:ss');
+      return formattedDate;
+    }),    
+    signedAt: yup.string().matches(/^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}$/, 'Le format de la date doit être "MM/dd/yyyy HH:mm:ss"').nullable()
+    .transform((originalValue, originalObject) => {
+      const formattedDate = moment(originalValue).format('MM/DD/YYYY HH:mm:ss');
+      return formattedDate;
+    }), 
+  });
 
 const app = express();
 const port = 3000;
 
+const users = db.get('users').value();
+const courses = db.get('courses').value();
+const studentCourses = db.get('studentcourses').value();
+
 // Middleware pour traiter le corps des requêtes au format JSON
 app.use(bodyParser.json());
 
-app.get('/users', (req: Request, res: Response) => {
-  const users = db.get('users').value();
+const basicAuthUsers = users.reduce((acc: { [key: string]: string }, user: any) => {
+  acc[user.email] = user.password;
+  return acc;
+}, {});
+
+app.use(basicAuth({
+  users: basicAuthUsers,
+  challenge: true,
+  unauthorizedResponse: 'Nom d\'utilisateur ou mot de passe incorrect',
+}));
+
+app.use((req: any, res, next) => {
+  
+  const authenticatedUser = users.find((u: any) => u.email === req.auth.user);
+  if (authenticatedUser) {
+    req.user = authenticatedUser;
+  }
+  next();
+});
+
+function checkRole(role: string) {
+  return (req: any, res: any, next: any) => {
+    if (req.user.role !== role) {
+      return res.status(403).send({ message: 'Accès refusé' });
+    }
+    next();
+  };
+}
+
+app.get('/users', checkRole('admin'), (req: Request, res: Response) => {
   res.json(users);
 });
 
 // Endpoint pour ajouter un utilisateur
-app.post('/users', async (req: Request, res: Response) => {
-  const { adminEmail, adminPassword, email, password, role } = req.body;
+app.post('/users', checkRole('admin'), async (req: Request, res: Response) => {
+  const { email, password, role } = req.body;
 
   try {
-    if (!adminEmail || !adminPassword) {
-        throw new Error('Il manque adminEmail et/ou adminPassword.');
-    }
-
-    const users = db.get('users').value();
-
-    const userIndex = users.findIndex((u: any) => u.email === adminEmail && u.password === adminPassword && u.role === 'admin');
-
-    if (userIndex === -1) {
-        throw new Error('adminEmail n\'a pas les droits pour effectuer cette action ou mot de passe incorrect.');
-    }
-
     const newUserIndex = users.findIndex((u: any) => u.email === email);
 
     if (newUserIndex !== -1) {
@@ -111,31 +146,16 @@ app.post('/users', async (req: Request, res: Response) => {
   }
 });
 
-app.get('/courses', (req: Request, res: Response) => {
-  const courses = db.get('courses').value();
+app.get('/courses', checkRole('admin'), (req: Request, res: Response) => {
   res.json(courses);
 });
 
 // Endpoint pour ajouter un cours (seulement accessible par les administrateurs)
-app.post('/courses', async (req: Request, res: Response) => {
-  const { adminEmail, adminPassword, title, date } = req.body;
+app.post('/courses', checkRole('admin'), async (req: Request, res: Response) => {
+  const { title, date } = req.body;
 
   try {
-    if (!adminEmail || !adminPassword) {
-      throw new Error('Il manque adminEmail et/ou adminPassword.');
-    }
-
-    const users = db.get('users').value();
-
-    const adminIndex = users.findIndex((u: any) => u.email === adminEmail && u.password === adminPassword && u.role === 'admin');
-
-    if (adminIndex === -1) {
-      throw new Error('adminEmail n\'a pas les droits pour effectuer cette action ou mot de passe incorrect.');
-    }
-
     await courseSchema.validate({ title, date });
-
-    const courses = db.get('courses').value();
 
     // Récupération de la dernière personne dans la base de données
     const lastCourse = courses[courses.length - 1];
@@ -145,6 +165,50 @@ app.post('/courses', async (req: Request, res: Response) => {
     db.update('courses', (courses: any[]) => courses.concat({ id: courseId, title, date })).write();
 
     res.status(201).json({ id: courseId, title, date });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.get('/studentcourses', checkRole('admin'), (req: Request, res: Response) => {
+  res.json(studentCourses);
+});
+
+app.post('/studentcourses', checkRole('admin'), async (req: Request, res: Response) => {
+  const { studentId, courseId } = req.body;
+  const currentDate = new Date();
+
+  // Obtenir les composants de la date
+  const month = String(currentDate.getMonth() + 1).padStart(2, '0'); // Les mois commencent à 0, donc ajout de 1
+  const day = String(currentDate.getDate()).padStart(2, '0');
+  const year = currentDate.getFullYear();
+  const hours = String(currentDate.getHours()).padStart(2, '0');
+  const minutes = String(currentDate.getMinutes()).padStart(2, '0');
+  const seconds = String(currentDate.getSeconds()).padStart(2, '0');
+
+  // Construire la chaîne de date formatée
+  const registeredAt = `${month}/${day}/${year} ${hours}:${minutes}:${seconds}`;
+  try {
+    await studentCourseSchema.validate({ studentId, courseId , registeredAt});
+
+    if (users.findIndex((u: any) => u.id === studentId && u.role === "student") === -1) 
+    {
+      throw new Error('L\'ID fourni ne correspond pas à un étudiant');
+    }
+
+    if (courses.findIndex((c: any) => c.id === courseId) === -1) 
+    {
+      throw new Error('Cours non trouvé.');
+    }
+
+    // Récupération de la dernière personne dans la base de données
+    const lastStudentCourse = studentCourses[studentCourses.length - 1];
+    const studentCourseId = lastStudentCourse ? Number(lastStudentCourse.id) + 1 : 1;
+
+    // Ajout du cours à la base de données de manière atomique
+    db.update('studentcourses', (studentCourses: any[]) => studentCourses.concat({ id: studentCourseId, studentId, courseId, registeredAt, signedAt: null })).write();
+
+    res.status(201).json({ id: studentCourseId, studentId, courseId, registeredAt, signedAt: null });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
