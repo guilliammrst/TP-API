@@ -11,12 +11,6 @@
       "email": "student@test.com",
       "password": "test",
       "role": "student"
-    },
-    {
-      "id": 3,
-      "email": "testtes@test.fr",
-      "password": "Test",
-      "role": "student"
     }
   ],
   "courses": [
@@ -29,36 +23,6 @@
       "id": 2,
       "title": "Cours2",
       "date": "11/11/2021 11:11:11"
-    },
-    {
-      "id": 3,
-      "title": "api",
-      "date": "11/11/2011 01:51:11"
-    },
-    {
-      "id": 4,
-      "title": "api",
-      "date": "11/11/2011 01:51:11"
-    },
-    {
-      "id": 5,
-      "title": "api",
-      "date": "11/11/2011 01:51:11"
-    },
-    {
-      "id": 6,
-      "title": "api",
-      "date": "11/11/2011 01:51:11"
-    },
-    {
-      "id": 7,
-      "title": "api",
-      "date": "11/11/2011 01:51:11"
-    },
-    {
-      "id": 8,
-      "title": "api",
-      "date": "11/11/2011 01:51:00"
     }
   ],
   "studentcourses": [
@@ -66,34 +30,7 @@
       "id": 1,
       "studentId": 2,
       "courseId": 2,
-      "registeredAt": "11/11/2011 01:51:11"
-    },
-    {
-      "id": 2,
-      "studentId": 2,
-      "courseId": 2,
-      "registeredAt": "11/23/2023 16:52:01",
-      "signedAt": null
-    },
-    {
-      "id": 3,
-      "studentId": 2,
-      "courseId": 2,
-      "registeredAt": "11/23/2023 16:53:23",
-      "signedAt": null
-    },
-    {
-      "id": 4,
-      "studentId": 2,
-      "courseId": 8,
-      "registeredAt": "11/23/2023 16:54:14",
-      "signedAt": null
-    },
-    {
-      "id": 5,
-      "studentId": 2,
-      "courseId": 2,
-      "registeredAt": "11/23/2023 16:54:23",
+      "registeredAt": "11/11/2011 01:51:11",
       "signedAt": null
     }
   ]

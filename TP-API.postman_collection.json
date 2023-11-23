@@ -1,0 +1,158 @@
+{
+	"info": {
+		"_postman_id": "c7e50081-f5b9-4846-8601-76f3d8d2dbba",
+		"name": "TP API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "30082090"
+	},
+	"item": [
+		{
+			"name": "Get users",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": {
+						"username": "admin@test.com",
+						"password": "test"
+					}
+				},
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:3000/users"
+			},
+			"response": []
+		},
+		{
+			"name": "Add user",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": {
+						"username": "admin@test.com",
+						"password": "test"
+					}
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"email\": \"test@test.fr\",\r\n  \"password\": \"Test\",\r\n  \"role\": \"student\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:3000/users"
+			},
+			"response": []
+		},
+		{
+			"name": "Get courses",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": {
+						"password": "test",
+						"username": "admin@test.com"
+					}
+				},
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:3000/courses"
+			},
+			"response": []
+		},
+		{
+			"name": "Add course",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": {
+						"username": "admin@test.com",
+						"password": "test"
+					}
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"title\": \"api\",\r\n  \"date\": \"11/11/2011 01:51:70\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:3000/courses"
+			},
+			"response": []
+		},
+		{
+			"name": "Get student courses",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": {
+						"username": "admin@test.com",
+						"password": "test"
+					}
+				},
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:3000/studentcourses"
+			},
+			"response": []
+		},
+		{
+			"name": "Add student at a course",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": {
+						"username": "admin@test.com",
+						"password": "test"
+					}
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"studentId\": 2,\r\n    \"courseId\": 2\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:3000/studentcourses"
+			},
+			"response": []
+		},
+		{
+			"name": "Sign course",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": {
+						"username": "student@test.com",
+						"password": "test"
+					}
+				},
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"studentId\": 2,\r\n    \"courseId\": 2\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:3000/sign-course"
+			},
+			"response": []
+		}
+	]
+}

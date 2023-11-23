@@ -39,6 +39,15 @@ if (!db.has('users').value()) {
             "title": "Cours2",
             "date": "11/11/2021 11:11:11",
           }
+        ],
+        studentcourses: [
+          {
+            "id": 1,
+            "studentId": 2,
+            "courseId": 2,
+            "registeredAt": "11/11/2011 01:51:11",
+            "signedAt": null
+          }
         ]
       }
       ).write();
@@ -179,7 +188,7 @@ app.post('/studentcourses', checkRole('admin'), async (req: Request, res: Respon
   const currentDate = new Date();
 
   // Obtenir les composants de la date
-  const month = String(currentDate.getMonth() + 1).padStart(2, '0'); // Les mois commencent à 0, donc ajout de 1
+  const month = String(currentDate.getMonth() + 1).padStart(2, '0');
   const day = String(currentDate.getDate()).padStart(2, '0');
   const year = currentDate.getFullYear();
   const hours = String(currentDate.getHours()).padStart(2, '0');
@@ -201,6 +210,11 @@ app.post('/studentcourses', checkRole('admin'), async (req: Request, res: Respon
       throw new Error('Cours non trouvé.');
     }
 
+    if (studentCourses.findIndex((sc: any) => sc.studentId === studentId && sc.courseId === courseId) !== -1) 
+    {
+      throw new Error('L\'étudiant est déjà inscrit à ce cours');
+    }
+
     // Récupération de la dernière personne dans la base de données
     const lastStudentCourse = studentCourses[studentCourses.length - 1];
     const studentCourseId = lastStudentCourse ? Number(lastStudentCourse.id) + 1 : 1;
@@ -209,6 +223,47 @@ app.post('/studentcourses', checkRole('admin'), async (req: Request, res: Respon
     db.update('studentcourses', (studentCourses: any[]) => studentCourses.concat({ id: studentCourseId, studentId, courseId, registeredAt, signedAt: null })).write();
 
     res.status(201).json({ id: studentCourseId, studentId, courseId, registeredAt, signedAt: null });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.patch('/sign-course', checkRole('student'), (req: Request, res: Response) => {
+  const { courseId } = req.body;
+
+  try{
+    const user = (req as any).user;
+
+    let studentCourse = studentCourses.find((sc: any) => sc.studentId === user.id && sc.courseId === courseId);
+
+    if (!studentCourse) {
+      throw new Error('Le cours avec cet ID n\'existe pas pour cet étudiant');
+    }
+
+    if (studentCourse.signedAt) {
+      throw new Error('Le cours a déjà été signé');
+    }
+
+    const currentDate = new Date();
+
+    // Obtenir les composants de la date
+    const month = String(currentDate.getMonth() + 1).padStart(2, '0'); // Les mois commencent à 0, donc ajout de 1
+    const day = String(currentDate.getDate()).padStart(2, '0');
+    const year = currentDate.getFullYear();
+    const hours = String(currentDate.getHours()).padStart(2, '0');
+    const minutes = String(currentDate.getMinutes()).padStart(2, '0');
+    const seconds = String(currentDate.getSeconds()).padStart(2, '0');
+
+    // Construire la chaîne de date formatée
+    const signedAt = `${month}/${day}/${year} ${hours}:${minutes}:${seconds}`;
+
+    studentCourse.signedAt = signedAt;
+
+    studentCourses[studentCourse] = { ...studentCourses[studentCourse], ...studentCourse };
+
+    db.set('studentcourses', studentCourses).write();
+
+    res.status(200).send({ message: 'Cours signé avec succès' });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
